@@ -59,6 +59,11 @@ request = Typhoeus::Request.new("http://www.pauldix.net",
 # the options are all optional. The default for :method is :get. Timeout is measured in milliseconds.
 # cache_timeout is measured in seconds.
 
+# Run the request via Hydra.
+hydra = Typhoeus::Hydra.new
+hydra.queue(request)
+hydra.run
+
 # the response object will be set after the request is run
 response = request.response
 response.code    # http status code
@@ -77,6 +82,40 @@ response = Typhoeus::Request.head("http://www.pauldix.net")
 response = Typhoeus::Request.put("http://localhost:3000/posts/1", :body => "whoo, a body")
 response = Typhoeus::Request.post("http://localhost:3000/posts", :params => {:title => "test post", :content => "this is my test"})
 response = Typhoeus::Request.delete("http://localhost:3000/posts/1")
+</pre>
+
+*Handling HTTP errors*
+You can query the response object to figure out if you had a successful request or not. Here's some example code that you might use to handle errors.
+
+<pre>
+request.on_complete do |response|
+  if response.success?
+    # hell yeah
+  elsif response.timed_out?
+    # aw hell no
+    log("got a time out")
+  elsif response.code == 0
+    # Could not get an http response, something's wrong.
+    log(response.curl_error_message)
+  else
+    # Received a non-successful http response.
+    log("HTTP request failed: " + response.code.to_s)
+  end
+end
+</pre>
+
+This also works with serial (blocking) requests in the same fashion. Both serial and parallel requests return a Response object.
+
+*Handling file uploads*
+A File object can be passed as a param for a POST request to handle uploading files to the server. Typhoeus will upload the file as the original file name and use Mime::Types to set the content type.
+
+<pre>
+response = Typhoeus::Request.post("http://localhost:3000/posts",
+  :params => {
+    :title => "test post", :content => "this is my test",
+    :file => File.open("thesis.txt","r")
+  }
+)
 </pre>
 
 *Making Parallel Requests*
@@ -149,7 +188,7 @@ hydra.cache_getter do |request|
 end
 </pre>
 
-*Stubbing*
+*Direct Stubbing*
 Hydra allows you to stub out specific urls and patters to avoid hitting remote servers while testing.
 
 <pre>
@@ -178,6 +217,15 @@ All of the quick requests are done using the singleton hydra object. If you want
 <pre>
 hydra = Typhoeus::Hydra.hydra
 hydra.stub(:get, "http://localhost:3000/users")
+</pre>
+
+*Timeouts*
+
+No exceptions are raised on HTTP timeouts. You can check whether a request timed out with the following methods:
+
+<pre>
+easy.timed_out?  # for a raw Easy handle
+response.timed_out?  # for a Response handle
 </pre>
 
 *Basic Authentication*
@@ -301,6 +349,20 @@ I set up a benchmark to test how the parallel performance works vs Ruby's built 
 </pre>
 
 We can see from this that NET::HTTP performs as expected, taking 10 seconds to run 20 500ms requests. Typhoeus only takes 500ms (the time of the response that took the longest.) One other thing to note is that Typhoeus keeps a pool of libcurl Easy handles to use. For this benchmark I warmed the pool first. So if you test this out it may be a bit slower until the Easy handle pool has enough in it to run all the simultaneous requests. For some reason the easy handles can take quite some time to allocate.
+
+h2. Running the specs
+
+Running the specs requires the native extensions to be built and a couple of Sinatra servers to be booted. Do this:
+
+<pre>
+  # Make sure to build the native extensions
+  rake build_native
+  # Start up the test servers (in another terminal)
+  rake start_test_servers
+
+  # Run the specs
+  rake spec
+</pre>
 
 h2. Next Steps
 

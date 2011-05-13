@@ -1,6 +1,32 @@
-Current Master
---------------
+Current master
+---------------------
+* Added CURLOPT_INTERFACE option via Request#interface=. [spiegela]
+* Added Tempfile support to Form#process! [richievos]
+
+0.2.4
+-----
+* Fix form POSTs to only use multipart for file uploads, otherwise use application/x-www-form-urlencoded [dbalatero]
+
+0.2.3
+-----
+* Code duplication in Typhoeus::Form led to nested URL param errors on POST only. Fixed [dbalatero]
+
+0.2.2
+-----
+* Fixed a problem with nested URL params encoding incorrectly [dbalatero]
+
+0.2.1
+-----
 * Added extended proxy support [Zapotek, GH-46]
+* eliminated compile time warnings by using proper type declarations [skaes, GH-54]
+* fixed broken calls to rb_raise [skaes, GH-54]
+* prevent leaking of curl easy handles when exceptions are raised (either from typhoeus itself or user callbacks) [skaes, GH-54]
+* fixed Easy#timed_out? using curl return codes [skaes, GH-54]
+* provide curl return codes and corresponding curl error messages on classes Easy and Request [skaes, GH-54]
+* allow VCR to whitelist hosts in Typhoeus stubbing/mocking [myronmarston, GH-57]
+* added timed_out? documentation, method to Response [dbalatero, GH-34]
+* added abort to Hydra to prematurely stop a hydra.run [Zapotek]
+* added file upload support for POST requests [jtarchie, GH-59]
 
 0.2.0
 ------

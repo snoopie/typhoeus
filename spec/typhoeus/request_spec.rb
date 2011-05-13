@@ -1,4 +1,4 @@
-require File.dirname(__FILE__) + '/../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 
 describe Typhoeus::Request do
   describe "#inspect" do
@@ -25,7 +25,7 @@ describe Typhoeus::Request do
     it "should dump the method" do
       @request.inspect.should =~ /:get/
     end
-    
+
     it "should dump out headers" do
       @request.inspect.should =~ /"Content-Type"\s*=>\s*"text\/html"/
     end
@@ -74,7 +74,23 @@ describe Typhoeus::Request do
                                       :params => {
                                         :a => ['789','2434']
                                       })
-      request.params_string.should == "a[]=789&a[]=2434"
+      request.params_string.should == "a%5B%5D=789&a%5B%5D=2434"
+    end
+
+    it "should nest arrays in hashes" do
+      request = Typhoeus::Request.new('http://google.com',
+                                      :params => {
+                                        :a => { :b => { :c => ['d','e'] } }
+                                      })
+      request.params_string.should == "a%5Bb%5D%5Bc%5D%5B%5D=d&a%5Bb%5D%5Bc%5D%5B%5D=e"
+    end
+
+    it "should translate nested params correctly" do
+      request = Typhoeus::Request.new('http://google.com',
+                                      :params => {
+                                        :a => { :b => { :c => 'd' } }
+                                      })
+      request.params_string.should == "a%5Bb%5D%5Bc%5D=d"
     end
   end
 
@@ -86,11 +102,11 @@ describe Typhoeus::Request do
     end
 
     it "can run a POST synchronously" do
-      response = Typhoeus::Request.post("http://localhost:3000", :params => {:q => "hi"}, :headers => {:foo => "bar"})
+      response = Typhoeus::Request.post("http://localhost:3000", :params => {:q => { :a => "hi" } }, :headers => {:foo => "bar"})
       response.code.should == 200
       json = JSON.parse(response.body)
       json["REQUEST_METHOD"].should == "POST"
-      json["rack.request.query_hash"]["q"].should == "hi"
+      json["rack.request.query_hash"]["q"]["a"].should == "hi"
     end
 
     it "can run a PUT synchronously" do
@@ -212,6 +228,35 @@ describe Typhoeus::Request do
     request.call_handlers
     good.should be_true
   end
+
+  describe "time info" do
+    it "should have time" do
+      response = Typhoeus::Request.get("http://localhost:3000")
+      response.time.should > 0
+    end
+
+    it "should have connect time" do
+      response = Typhoeus::Request.get("http://localhost:3000")
+      response.connect_time.should > 0
+    end
+
+    it "should have app connect time" do
+      response = Typhoeus::Request.get("http://localhost:3000")
+      response.app_connect_time.should  > 0
+    end
+
+    it "should have start transfer time" do
+      response = Typhoeus::Request.get("http://localhost:3000")
+      response.start_transfer_time.should  > 0
+    end
+
+    it "should have pre-transfer time" do
+      response = Typhoeus::Request.get("http://localhost:3000")
+      response.pretransfer_time.should  > 0
+    end
+
+  end
+
 
   describe "authentication" do
 

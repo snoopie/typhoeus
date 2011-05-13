@@ -4,7 +4,11 @@ module Typhoeus
     attr_reader :code, :headers, :body, :time,
                 :requested_url, :requested_remote_method,
                 :requested_http_method, :start_time,
-                :effective_url, :curl_return_code, :curl_error_message
+                :effective_url, :start_transfer_time,
+                :app_connect_time, :pretransfer_time,
+                :connect_time, :name_lookup_time,
+                :curl_return_code, :curl_error_message
+
     attr_writer :headers_hash
 
     def initialize(params = {})
@@ -19,6 +23,11 @@ module Typhoeus
       @requested_url         = params[:requested_url]
       @requested_http_method = params[:requested_http_method]
       @start_time            = params[:start_time]
+      @start_transfer_time   = params[:start_transfer_time]
+      @app_connect_time      = params[:app_connect_time]
+      @pretransfer_time      = params[:pretransfer_time]
+      @connect_time          = params[:connect_time]
+      @name_lookup_time      = params[:name_lookup_time]
       @request               = params[:request]
       @effective_url         = params[:effective_url]
       @mock                  = params[:mock] || false  # default
@@ -67,6 +76,10 @@ module Typhoeus
 
     def modified?
       @code != 304
+    end
+
+    def timed_out?
+      curl_return_code == 28
     end
 
     private

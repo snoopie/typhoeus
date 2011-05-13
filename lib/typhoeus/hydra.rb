@@ -32,6 +32,17 @@ module Typhoeus
       @hydra = val
     end
 
+    #
+    # Abort the run on a best-effort basis.
+    #
+    # It won't abort the current burst of @max_concurrency requests,
+    # however it won't fire the rest of the queued requests so the run
+    # will be aborted as soon as possible...
+    #
+    def abort
+      @queued_requests.clear
+    end
+
     def clear_cache_callbacks
       @cache_setter = nil
       @cache_getter = nil
@@ -154,6 +165,7 @@ module Typhoeus
       easy.request_body = request.body    if request.body
       easy.timeout      = request.timeout if request.timeout
       easy.connect_timeout = request.connect_timeout if request.connect_timeout
+      easy.interface       = request.interface if request.interface
       easy.follow_location = request.follow_location if request.follow_location
       easy.max_redirects = request.max_redirects if request.max_redirects
       easy.disable_ssl_peer_verification if request.disable_ssl_peer_verification
@@ -215,14 +227,19 @@ module Typhoeus
     private :handle_request
 
     def response_from_easy(easy, request)
-      Response.new(:code    => easy.response_code,
+      Response.new(:code                => easy.response_code,
+                   :headers             => easy.response_header,
+                   :body                => easy.response_body,
+                   :time                => easy.total_time_taken,
+                   :start_transfer_time => easy.start_transfer_time,
+                   :app_connect_time    => easy.app_connect_time,
+                   :pretransfer_time    => easy.pretransfer_time,
+                   :connect_time        => easy.connect_time,
+                   :name_lookup_time    => easy.name_lookup_time,
+                   :effective_url       => easy.effective_url,
                    :curl_return_code => easy.curl_return_code,
                    :curl_error_message => easy.curl_error_message,
-                   :headers => easy.response_header,
-                   :body    => easy.response_body,
-                   :time    => easy.total_time_taken,
-                   :effective_url => easy.effective_url,
-                   :request => request)
+                   :request             => request)
     end
     private :response_from_easy
   end

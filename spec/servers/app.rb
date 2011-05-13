@@ -5,6 +5,16 @@ require 'json'
 require 'zlib'
 
 @@fail_count = 0
+
+post '/file' do
+  {
+    'content-type' => params[:file][:type],
+    'filename' => params[:file][:filename],
+    'content' => params[:file][:tempfile].read,
+    'request-content-type' => request.env['CONTENT_TYPE']
+  }.to_json
+end
+
 get '/fail/:number' do
   if @@fail_count >= params[:number].to_i
     "ok"

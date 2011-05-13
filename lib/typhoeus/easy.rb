@@ -20,6 +20,7 @@ module Typhoeus
       # [Only works on unix-style/SIGALRM operating systems. IOW, does
       # not work on Windows.
       :CURLOPT_CONNECTTIMEOUT_MS  => 156,
+      :CURLOPT_INTERFACE      => 10000 + 62,
       :CURLOPT_NOSIGNAL       => 99,
       :CURLOPT_HTTPHEADER     => 10023,
       :CURLOPT_FOLLOWLOCATION => 52,
@@ -40,13 +41,19 @@ module Typhoeus
       :CURLOPT_SSLKEYTYPE     => 10088,
       :CURLOPT_KEYPASSWD      => 10026,
       :CURLOPT_CAINFO         => 10065,
-      :CURLOPT_CAPATH         => 10097
+      :CURLOPT_CAPATH         => 10097,
     }
     INFO_VALUES = {
-      :CURLINFO_RESPONSE_CODE => 2097154,
-      :CURLINFO_TOTAL_TIME    => 3145731,
-      :CURLINFO_HTTPAUTH_AVAIL => 0x200000 + 23,
-      :CURLINFO_EFFECTIVE_URL => 0x100000 + 1
+      :CURLINFO_RESPONSE_CODE      => 2097154,
+      :CURLINFO_TOTAL_TIME         => 3145731,
+      :CURLINFO_HTTPAUTH_AVAIL     => 0x200000 + 23,
+      :CURLINFO_EFFECTIVE_URL      => 0x100000 + 1,
+      :CURLINFO_NAMELOOKUP_TIME    => 0x300000 + 4,
+      :CURLINFO_CONNECT_TIME       => 0x300000 + 5,
+      :CURLINFO_PRETRANSFER_TIME   => 0x300000 + 6,
+      :CURLINFO_STARTTRANSFER_TIME => 0x300000 + 17,
+      :CURLINFO_APPCONNECT_TIME    => 0x300000 + 33,
+
     }
     AUTH_TYPES = {
       :CURLAUTH_BASIC         => 1,
@@ -76,6 +83,11 @@ module Typhoeus
     def headers=(hash)
       @headers = hash
     end
+    
+    def interface=(interface)
+      @interface = interface
+      set_option(OPTION_VALUES[:CURLOPT_INTERFACE], interface)
+    end
 
     def proxy=(proxy)
       set_option(OPTION_VALUES[:CURLOPT_PROXY], proxy[:server])
@@ -102,6 +114,26 @@ module Typhoeus
 
     def total_time_taken
       get_info_double(INFO_VALUES[:CURLINFO_TOTAL_TIME])
+    end
+
+    def start_transfer_time
+      get_info_double(INFO_VALUES[:CURLINFO_STARTTRANSFER_TIME])
+    end
+
+    def app_connect_time
+      get_info_double(INFO_VALUES[:CURLINFO_APPCONNECT_TIME])
+    end
+
+    def pretransfer_time
+      get_info_double(INFO_VALUES[:CURLINFO_PRETRANSFER_TIME])
+    end
+
+    def connect_time
+      get_info_double(INFO_VALUES[:CURLINFO_CONNECT_TIME])
+    end
+
+    def name_lookup_time
+      get_info_double(INFO_VALUES[:CURLINFO_NAMELOOKUP_TIME])
     end
 
     def effective_url
@@ -147,9 +179,7 @@ module Typhoeus
     def request_body=(request_body)
       @request_body = request_body
       if @method == :put
-        easy_set_request_body(@request_body)
-        headers["Transfer-Encoding"] = ""
-        headers["Expect"] = ""
+        easy_set_request_body(@request_body.to_s)
       else
         self.post_data = request_body
       end
@@ -177,7 +207,7 @@ module Typhoeus
         self.post_data = ""
       elsif method == :put
         set_option(OPTION_VALUES[:CURLOPT_UPLOAD], 1)
-        self.request_body = "" unless @request_body
+        self.request_body = @request_body.to_s
       elsif method == :head
         set_option(OPTION_VALUES[:CURLOPT_NOBODY], 1)
       else
@@ -191,24 +221,22 @@ module Typhoeus
       set_option(OPTION_VALUES[:CURLOPT_COPYPOSTFIELDS], data)
     end
 
+    def params
+      @form.nil? ? {} : @form.params
+    end
+
     def params=(params)
-      @params = params
-      params_string = params.keys.collect do |k|
-        value = params[k]
-        if value.is_a? Hash
-          value.keys.collect {|sk| Typhoeus::Utils.escape("#{k}[#{sk}]") + "=" + Typhoeus::Utils.escape(value[sk].to_s)}
-        elsif value.is_a? Array
-          key = Typhoeus::Utils.escape(k.to_s)
-          value.collect { |v| "#{key}=#{Typhoeus::Utils.escape(v.to_s)}" }.join('&')
-        else
-          "#{Typhoeus::Utils.escape(k.to_s)}=#{Typhoeus::Utils.escape(params[k].to_s)}"
-        end
-      end.flatten.join("&")
+      @form = Typhoeus::Form.new(params)
 
       if method == :post
-        self.post_data = params_string
+        @form.process!
+        if @form.multipart?
+          set_option(OPTION_VALUES[:CURLOPT_HTTPPOST], @form)
+        else
+          self.post_data = @form.to_s
+        end
       else
-        self.url = "#{url}?#{params_string}"
+        self.url = "#{url}?#{@form.to_s}"
       end
     end
 
@@ -261,10 +289,13 @@ module Typhoeus
     end
 
     def set_option(option, value)
-      if value.class == String
-        easy_setopt_string(option, value)
-      elsif value
-        easy_setopt_long(option, value)
+      case value
+        when String
+          easy_setopt_string(option, value)
+        when Typhoeus::Form
+          easy_setopt_form(option, value)
+        else
+          easy_setopt_long(option, value) if value
       end
     end
 
@@ -317,6 +348,7 @@ module Typhoeus
       @response_code = 0
       @response_header = ""
       @response_body = ""
+      @request_body = ""
       easy_reset()
     end
 

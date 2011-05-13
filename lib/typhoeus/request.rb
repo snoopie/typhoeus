@@ -7,7 +7,7 @@ module Typhoeus
     attr_accessor :method, :params, :body, :connect_timeout, :timeout,
                   :user_agent, :response, :cache_timeout, :follow_location,
                   :max_redirects, :proxy, :proxy_username,:proxy_password,
-                  :disable_ssl_peer_verification,
+                  :disable_ssl_peer_verification, :interface,
                   :ssl_cert, :ssl_cert_type, :ssl_key, :ssl_key_type,
                   :ssl_key_password, :ssl_cacert, :ssl_capath, :verbose,
                   :username, :password, :auth_method, :user_agent,
@@ -22,6 +22,7 @@ module Typhoeus
     # ** +:params+  : params as a Hash
     # ** +:body+
     # ** +:timeout+ : timeout (ms)
+    # ** +:interface+ : interface or ip address (string)
     # ** +:connect_timeout+ : connect timeout (ms)
     # ** +:headers+  : headers as Hash
     # ** +:user_agent+ : user agent (string)
@@ -48,6 +49,7 @@ module Typhoeus
       @body             = options[:body]
       @timeout          = options[:timeout]
       @connect_timeout  = options[:connect_timeout]
+      @interface        = options[:interface]
       @headers          = options[:headers] || {}
       @user_agent       = options[:user_agent] || Typhoeus::USER_AGENT
       @cache_timeout    = options[:cache_timeout]
@@ -84,8 +86,10 @@ module Typhoeus
       @handled_response = nil
     end
 
+    LOCALHOST_ALIASES = %w[ localhost 127.0.0.1 0.0.0.0 ]
+
     def localhost?
-      %(localhost 127.0.0.1 0.0.0.0).include?(@parsed_uri.host)
+      LOCALHOST_ALIASES.include?(@parsed_uri.host)
     end
 
     def host
@@ -98,23 +102,18 @@ module Typhoeus
       end
     end
 
+    def host_domain
+      @parsed_uri.host
+    end
+
     def headers
       @headers["User-Agent"] = @user_agent
       @headers
     end
 
     def params_string
-      params.keys.sort { |a, b| a.to_s <=> b.to_s }.collect do |k|
-        value = params[k]
-        if value.is_a? Hash
-          value.keys.collect {|sk| Typhoeus::Utils.escape("#{k}[#{sk}]") + "=" + Typhoeus::Utils.escape(value[sk].to_s)}
-        elsif value.is_a? Array
-          key = Typhoeus::Utils.escape(k.to_s)
-          value.collect { |v| "#{key}[]=#{Typhoeus::Utils.escape(v.to_s)}" }.join('&')
-        else
-          "#{Typhoeus::Utils.escape(k.to_s)}=#{Typhoeus::Utils.escape(params[k].to_s)}"
-        end
-      end.flatten.join("&")
+      traversal = Typhoeus::Utils.traverse_params_hash(params)
+      Typhoeus::Utils.traversal_to_param_string(traversal)
     end
 
     def on_complete(&block)
