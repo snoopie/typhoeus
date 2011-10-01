@@ -89,23 +89,23 @@ Gem::Specification.new do |s|
   s.rubygems_version = %q{1.6.2}
   s.summary = %q{A library for interacting with web services (and building SOAs) at blinding speed.}
   s.test_files = [
-    "spec/servers/app.rb",
      "spec/spec_helper.rb",
-     "spec/typhoeus/easy_spec.rb",
-     "spec/typhoeus/filter_spec.rb",
-     "spec/typhoeus/form_spec.rb",
-     "spec/typhoeus/hydra_mock_spec.rb",
      "spec/typhoeus/hydra_spec.rb",
-     "spec/typhoeus/multi_spec.rb",
-     "spec/typhoeus/normalized_header_hash_spec.rb",
-     "spec/typhoeus/remote_method_spec.rb",
-     "spec/typhoeus/remote_proxy_object_spec.rb",
-     "spec/typhoeus/remote_spec.rb",
      "spec/typhoeus/request_spec.rb",
+     "spec/typhoeus/remote_spec.rb",
+     "spec/typhoeus/remote_method_spec.rb",
      "spec/typhoeus/response_spec.rb",
+     "spec/typhoeus/form_spec.rb",
+     "spec/typhoeus/filter_spec.rb",
+     "spec/typhoeus/multi_spec.rb",
+     "spec/typhoeus/easy_spec.rb",
      "spec/typhoeus/utils_spec.rb",
-     "examples/file.rb",
+     "spec/typhoeus/normalized_header_hash_spec.rb",
+     "spec/typhoeus/hydra_mock_spec.rb",
+     "spec/typhoeus/remote_proxy_object_spec.rb",
+     "spec/servers/app.rb",
      "examples/times.rb",
+     "examples/file.rb",
      "examples/twitter.rb"
   ]
 

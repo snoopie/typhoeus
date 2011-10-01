@@ -14,6 +14,10 @@ Like a modern code version of the mythical beast with 100 serpent heads, Typhoeu
 
 Some of the awesome features are parallel request execution, memoization of request responses (so you don't make the same request multiple times in a single group), built in support for caching responses to memcached (or whatever), and mocking capability baked in. It uses libcurl and libcurl-multi to work this speedy magic. I wrote the c bindings myself so it's yet another Ruby libcurl library, but with some extra awesomeness added in.
 
+h2. Windows Support
+
+Windows is tricky to get up and running. A reported working version of curl is "curl-7.19.4-devel-mingw32", provided you point --with-opt-include and --with-opt-lib flags to the correct directory when you `gem install`. Patches to make Windows work seamlessly are welcome!
+
 h2. Installation
 
 Typhoeus requires you to have a current version of libcurl installed. I've tested this with 7.19.4 and higher.
@@ -228,6 +232,14 @@ easy.timed_out?  # for a raw Easy handle
 response.timed_out?  # for a Response handle
 </pre>
 
+*Following Redirections*
+
+Use <code>:follow_location => true</code>,
+eg:
+<pre>
+Typhoeus::Request.new("www.example.com", :follow_location => true)
+</pre>
+
 *Basic Authentication*
 
 <pre>
@@ -246,6 +258,12 @@ Now, even if you have libcurl built with OpenSSL you may still have a messed up 
 
 <pre>
 Typhoeus::Request.get("https://mail.google.com/mail", :disable_ssl_peer_verification => true)
+</pre>
+
+If you are getting "SSL: certificate subject name does not match target host name" from curl (ex:- you are trying to access to b.c.host.com when the certificate subject is *.host.com). You can disable host verification. Like this:
+
+<pre>
+Typhoeus::Request.get("https://mail.google.com/mail", :disable_ssl_host_verification => true)
 </pre>
 
 *LibCurl*
