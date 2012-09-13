@@ -139,6 +139,50 @@ describe Typhoeus::Hydra do
     (Time.now - start_time).should < 1.2 # if it had run twice it would be ~ 2 seconds
   end
 
+  it "runs the handlers for all requests, queued before running the queue" do
+    hydra  = Typhoeus::Hydra.new
+    first  = Typhoeus::Request.new("http://localhost:3000/foo", :params => {:delay => 0})
+    second = Typhoeus::Request.new("http://localhost:3000/foo", :params => {:delay => 0})
+    call_count = 0
+    first.on_complete { |response| call_count += 1 }
+    second.on_complete { |response| call_count += 1 }
+    hydra.queue first
+    hydra.queue second
+    hydra.run
+    call_count.should == 2
+  end
+
+  it "runs the handlers for all requests, even if queued in a callback" do
+    hydra  = Typhoeus::Hydra.new
+    first  = Typhoeus::Request.new("http://localhost:3000/foo", :params => {:delay => 0})
+    second = Typhoeus::Request.new("http://localhost:3000/foo", :params => {:delay => 0})
+    call_count = 0
+    first.on_complete { |response| call_count += 1; hydra.queue second }
+    second.on_complete { |response| call_count += 1 }
+    hydra.queue first
+    hydra.run
+    call_count.should == 2
+  end
+
+  it "runs the handlers for all requests, even if queued in a callback in strange order" do
+    hydra  = Typhoeus::Hydra.new
+    first  = Typhoeus::Request.new("http://localhost:3000/foo", :params => {:delay => 1})
+    second = Typhoeus::Request.new("http://localhost:3000/bar", :params => {:delay => 2})
+    third  = Typhoeus::Request.new("http://localhost:3000/baz", :params => {:delay => 0})
+    fourth = Typhoeus::Request.new("http://localhost:3000/baz", :params => {:delay => 0})
+
+    call_count = 0
+    first.on_complete { |response| call_count += 1; hydra.queue third }
+    second.on_complete { |response| call_count += 1 ; hydra.queue fourth}
+    third.on_complete { |response| call_count += 1}
+    fourth.on_complete { |response| call_count += 1 }
+
+    hydra.queue first
+    hydra.queue second
+    hydra.run
+    call_count.should == 4
+  end
+
   it "can turn off memoization for GET requests" do
     hydra  = Typhoeus::Hydra.new
     hydra.disable_memoization
