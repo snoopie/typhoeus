@@ -19,6 +19,7 @@ module Typhoeus
       @retrieved_from_cache = {}
       @queued_requests = []
       @running_requests = 0
+      @completed_requests = {}
 
       self.stubs = []
       @active_stubs = []
@@ -64,7 +65,10 @@ module Typhoeus
         @queued_requests << request
       else
         if request.method == :get
-          if @memoize_requests && @memoized_requests.has_key?(request.url)
+          if completed_request = @completed_requests[request.url]
+            request.response = completed_request.response
+            request.call_handlers
+          elsif @memoize_requests && @memoized_requests.has_key?(request.url)
             if response = @retrieved_from_cache[request.url]
               request.response = response
               request.call_handlers
@@ -97,6 +101,7 @@ module Typhoeus
       @multi.reset_easy_handles{|easy| release_easy_object(easy)}
       @memoized_requests = {}
       @retrieved_from_cache = {}
+      @completed_requests = {}
       @running_requests = 0
     end
 
@@ -209,9 +214,9 @@ module Typhoeus
 
     def handle_request(request, response, live_request = true)
       request.response = response
+      @completed_requests[request.url] = request if @memoize_requests
 
-      self.class.run_global_hooks_for(:after_request_before_on_complete,
-                                      request)
+      self.class.run_global_hooks_for(:after_request_before_on_complete, request)
 
       if live_request && request.cache_timeout && @cache_setter
         @cache_setter.call(request)
