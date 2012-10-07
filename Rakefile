@@ -39,7 +39,7 @@ end
 
 desc "Builds the native code"
 task :build_native do
-  system("cd ext/typhoeus && ruby extconf.rb && make")
+  system("cd ext/typhoeus && ruby extconf.rb && make clean && make")
 end
 
 desc "Start up the test servers"
