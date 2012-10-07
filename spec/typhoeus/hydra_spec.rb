@@ -183,6 +183,24 @@ describe Typhoeus::Hydra do
     call_count.should == 4
   end
 
+  it "continues queued requests after a memoization hit" do
+    # Set max_concurrency to 1 so that the second and third requests will end
+    # up in the request queue.
+    hydra  = Typhoeus::Hydra.new :max_concurrency => 1
+
+    first  = Typhoeus::Request.new("http://localhost:3000/foo", :params => {:delay => 1})
+    second = Typhoeus::Request.new("http://localhost:3000/foo", :params => {:delay => 1})
+    third = Typhoeus::Request.new("http://localhost:3000/bar", :params => {:delay => 1})
+    hydra.queue first
+    hydra.queue second
+    hydra.queue third
+    hydra.run
+
+    first.response.body.should include("foo")
+    second.response.body.should include("foo")
+    third.response.body.should include("bar")
+  end
+
   it "can turn off memoization for GET requests" do
     hydra  = Typhoeus::Hydra.new
     hydra.disable_memoization
