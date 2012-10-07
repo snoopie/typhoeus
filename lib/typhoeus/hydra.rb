@@ -66,9 +66,11 @@ module Typhoeus
       else
         if request.method == :get
           if completed_request = @completed_requests[request.url]
+            queue_next
             request.response = completed_request.response
             request.call_handlers
           elsif @memoize_requests && @memoized_requests.has_key?(request.url)
+            queue_next
             if response = @retrieved_from_cache[request.url]
               request.response = response
               request.call_handlers
