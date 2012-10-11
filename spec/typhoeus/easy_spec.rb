@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 
 describe Typhoeus::Easy do
@@ -273,8 +274,22 @@ describe Typhoeus::Easy do
       easy.perform
 
       request = JSON.parse(easy.response_body)
-      request['CONTENT_TYPE'].should == 'application/x-www-form-urlencoded' 
-      request['rack.request.form_vars'].should == 'a=b&c=d&e[f][g]=h'
+      request['CONTENT_TYPE'].should == 'application/x-www-form-urlencoded'
+      request['rack.request.form_vars'].should == 'a=b&c=d&e%5Bf%5D%5Bg%5D=h'
+    end
+
+    it "should properly encode values in the post body" do
+      easy = Typhoeus::Easy.new
+      easy.url = "http://localhost:3002/normal_post"
+      easy.method = :post
+
+      easy.params = {:a => "a=b&c\nx x", :b => 2}
+      easy.perform
+
+      request = JSON.parse(easy.response_body)
+      request['CONTENT_TYPE'].should == 'application/x-www-form-urlencoded'
+
+      request['rack.request.form_vars'].should == 'a=a%3Db%26c%0Ax+x&b=2'
     end
 
     it "should handle a file upload, as multipart" do

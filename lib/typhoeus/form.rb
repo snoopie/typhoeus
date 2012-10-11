@@ -15,7 +15,7 @@ module Typhoeus
 
     def process!
       # add params
-      traversal[:params].each { |p| formadd_param(p[0], p[1]) }
+      traversal[:params].each { |p| formadd_param(Typhoeus::Utils.escape(p[0]), Typhoeus::Utils.escape(p[1])) }
 
       # add files
       traversal[:files].each { |file_args| formadd_file(*file_args) }
@@ -26,7 +26,7 @@ module Typhoeus
     end
 
     def to_s
-      Typhoeus::Utils.traversal_to_param_string(traversal, false)
+      Typhoeus::Utils.traversal_to_param_string(traversal)
     end
   end
 end
