@@ -111,6 +111,10 @@ module Typhoeus
       @memoize_requests = false
     end
 
+    def enable_memoization
+      @memoize_requests = true
+    end
+
     def cache_getter(&block)
       @cache_getter = block
     end
@@ -215,6 +219,16 @@ module Typhoeus
     private :release_easy_object
 
     def handle_request(request, response, live_request = true)
+      if(:get == request.method &&
+          [503, 504].include?(response.code) &&
+          !request.requeued? &&
+          request.retry?
+        )
+        get_from_cache_or_queue(request)
+        request.mark_requeued
+        return
+      end
+
       request.response = response
       @completed_requests[request.url] = request if @memoize_requests
 
