@@ -223,7 +223,7 @@ hydra.disable_retries
 # queue some requests that shouldn't be subject to retries
 
 hydra.run
-hydra.return_codes_for_retry(503, 504)
+hydra.return_codes_to_retry(503, 504)
 
 # ...
 </pre>
