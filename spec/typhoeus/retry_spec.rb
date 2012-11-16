@@ -91,6 +91,18 @@ describe Typhoeus::Hydra do
       Typhoeus::Hydra.allow_net_connect = true
       @hydra = Typhoeus::Hydra.new :max_concurrency => 1
       @hydra.enable_memoization
+      @cache = {}
+      @hydra.cache_getter do |request|
+        @cache[request.object_id]
+      end
+
+      @hydra.cache_setter do |request|
+        raise 'should get here'
+        if :get == request.method
+          [503, 504].should_not include(request.response.code)
+        end
+        @cache[request.object_id] = request.response
+      end
 
       @flaky_prefix = "http://localhost:3000/flaky"
     end
@@ -161,6 +173,7 @@ describe Typhoeus::Hydra do
                 request = Typhoeus::Request.new("#{@flaky_prefix}?single-#{code}-success",
                                                 :method => method)
                 request.on_retry { retry_count += 1 }
+                request.cache_timeout = 0
                 @hydra.queue request
                 @hydra.run
 
@@ -198,10 +211,12 @@ describe Typhoeus::Hydra do
                                                  :method => method)
                 request1.on_complete { callback_count += 1 }
                 request1.on_retry { retry_count += 1 }
+                request1.cache_timeout = 0
                 request2 = Typhoeus::Request.new("#{@flaky_prefix}?multi-request",
                                                  :method => method)
                 request2.on_complete { callback_count += 1 }
                 request2.on_retry { retry_count += 1 }
+                request1.cache_timeout = 0
                 @hydra.queue request1
                 @hydra.queue request2
                 @hydra.run
@@ -230,6 +245,7 @@ describe Typhoeus::Hydra do
                   :method => method
                 )
                 request.on_retry{ retry_count += 1 }
+                request.cache_timeout = 0
                 @hydra.queue request
 
                 @hydra.run
