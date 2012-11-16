@@ -88,6 +88,7 @@ describe Typhoeus::Hydra do
 
   describe 'retry' do
     before(:each) do
+      @request_timeout = 100
       Typhoeus::Hydra.allow_net_connect = true
       @hydra = Typhoeus::Hydra.new :max_concurrency => 1
       @hydra.enable_memoization
@@ -173,7 +174,7 @@ describe Typhoeus::Hydra do
                 request = Typhoeus::Request.new("#{@flaky_prefix}?single-#{code}-success",
                                                 :method => method)
                 request.on_retry { retry_count += 1 }
-                request.cache_timeout = 0
+                request.cache_timeout = @cache_timeout
                 @hydra.queue request
                 @hydra.run
 
@@ -211,12 +212,12 @@ describe Typhoeus::Hydra do
                                                  :method => method)
                 request1.on_complete { callback_count += 1 }
                 request1.on_retry { retry_count += 1 }
-                request1.cache_timeout = 0
+                request1.cache_timeout = @cache_timeout
                 request2 = Typhoeus::Request.new("#{@flaky_prefix}?multi-request",
                                                  :method => method)
                 request2.on_complete { callback_count += 1 }
                 request2.on_retry { retry_count += 1 }
-                request1.cache_timeout = 0
+                request1.cache_timeout = @cache_timeout
                 @hydra.queue request1
                 @hydra.queue request2
                 @hydra.run
@@ -245,7 +246,7 @@ describe Typhoeus::Hydra do
                   :method => method
                 )
                 request.on_retry{ retry_count += 1 }
-                request.cache_timeout = 0
+                request.cache_timeout = @cache_timeout
                 @hydra.queue request
 
                 @hydra.run
