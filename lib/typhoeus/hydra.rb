@@ -237,13 +237,13 @@ module Typhoeus
 
     def handle_request(request, response, live_request = true)
       if(:get == request.method &&
-          [503, 504].include?(response.code) &&
           retry_codes.include?(response.code) &&
           !request.requeued? &&
           request.retry?
         )
         get_from_cache_or_queue(request)
         request.mark_requeued
+        request.call_retry_handler
         return
       end
 
