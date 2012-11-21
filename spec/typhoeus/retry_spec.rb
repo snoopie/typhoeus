@@ -70,19 +70,12 @@ describe Typhoeus::Hydra do
     end
   end
 
-  describe '#return_codes_to_retry' do
+  describe '#retry_codes=' do
     it 'should set the retry codes to based on numeric parameters' do
       hydra = Typhoeus::Hydra.new
-      hydra.return_codes_to_retry(509, 510)
+      hydra.retry_codes = [509, 510]
 
       hydra.retry_codes.should == [509, 510]
-    end
-
-    it 'should set the retry codes to based on an array of codes' do
-      hydra = Typhoeus::Hydra.new
-      hydra.return_codes_to_retry([511, 512])
-
-      hydra.retry_codes.should == [511, 512]
     end
   end
 
@@ -130,7 +123,7 @@ describe Typhoeus::Hydra do
 
     describe 'with 503 and 504 configured' do
       before(:each) do
-        @hydra.return_codes_to_retry(503, 504)
+        @hydra.retry_codes = [503, 504]
       end
 
       describe 'server sanity check' do

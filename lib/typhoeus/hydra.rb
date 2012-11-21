@@ -8,7 +8,7 @@ module Typhoeus
     include Stubbing
     extend Callbacks
 
-    attr_reader :retry_codes
+    attr_accessor :retry_codes
 
     def initialize(options = {})
       @memoize_requests = true
@@ -226,24 +226,22 @@ module Typhoeus
       self
     end
 
-    def return_codes_to_retry(*codes)
-      if 1 == codes.size && codes.first.kind_of?(Array)
-        codes = codes.first
-      end
+    def retry_request?(request, response)
+      :get == request.method &&
+      retry_codes.include?(response.code) &&
+      !request.requeued? &&
+      request.retry?
+    end
 
-      @retry_codes = codes
-      self
+    def retry_request(request)
+      get_from_cache_or_queue(request)
+      request.mark_requeued
+      request.call_retry_handler
     end
 
     def handle_request(request, response, live_request = true)
-      if(:get == request.method &&
-          retry_codes.include?(response.code) &&
-          !request.requeued? &&
-          request.retry?
-        )
-        get_from_cache_or_queue(request)
-        request.mark_requeued
-        request.call_retry_handler
+      if retry_request?(request, response)
+        retry_request(request)
         return
       end
 
