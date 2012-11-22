@@ -265,6 +265,12 @@ describe Typhoeus::Request do
 
   end
 
+  describe "performed" do
+    it "should initially respond with false" do
+      request = Typhoeus::Request.new("http://localhost:3000")
+      request.performed?.should be_false
+    end
+  end
 
   describe "authentication" do
 

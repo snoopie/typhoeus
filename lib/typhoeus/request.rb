@@ -11,8 +11,9 @@ module Typhoeus
                   :ssl_cert, :ssl_cert_type, :ssl_key, :ssl_key_type,
                   :ssl_key_password, :ssl_cacert, :ssl_capath, :verbose,
                   :username, :password, :auth_method, :user_agent,
-                  :proxy_auth_method, :proxy_type, :attempt_retry
+                  :proxy_auth_method, :proxy_type, :attempt_retry, :performed
 
+    alias_method :performed?, :performed
 
     # Initialize a new Request
     #
@@ -77,6 +78,7 @@ module Typhoeus
       @password         = options[:password]
       @auth_method      = options[:auth_method]
       @attempt_retry    = !options.has_key?(:retry) || options[:retry]
+      @performed        = false
 
       if @method == :post
         @url = url

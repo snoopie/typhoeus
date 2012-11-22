@@ -142,9 +142,11 @@ module Typhoeus
           queue_next
           handle_request(request, val, false)
         else
+          request.performed = true
           @multi.add(get_easy_object(request))
         end
       else
+        request.performed = true
         @multi.add(get_easy_object(request))
       end
     end

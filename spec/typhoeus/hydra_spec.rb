@@ -43,7 +43,9 @@ describe Typhoeus::Hydra do
     hydra.queue second
     hydra.run
     first.response.body.should include("first")
+    first.performed?.should be_true
     second.response.body.should include("second")
+    second.performed?.should be_true
   end
 
   it "runs queued requests in order of queuing" do
@@ -67,6 +69,9 @@ describe Typhoeus::Hydra do
     first.response.body.should include("first")
     second.response.body.should include("second")
     third.response.body.should include("third")
+    first.performed?.should be_true
+    second.performed?.should be_true
+    third.performed?.should be_true
   end
 
   it "should store the curl return codes on the reponses" do
@@ -137,6 +142,7 @@ describe Typhoeus::Hydra do
     first.response.should == second.response
     first.handled_response.should == second.handled_response
     (Time.now - start_time).should < 1.2 # if it had run twice it would be ~ 2 seconds
+    first.performed?.should == !second.performed?
   end
 
   it "runs the handlers for all requests, queued before running the queue" do
@@ -150,6 +156,7 @@ describe Typhoeus::Hydra do
     hydra.queue second
     hydra.run
     call_count.should == 2
+    first.performed?.should == !second.performed?
   end
 
   it "runs the handlers for all requests, even if queued in a callback" do
@@ -162,6 +169,7 @@ describe Typhoeus::Hydra do
     hydra.queue first
     hydra.run
     call_count.should == 2
+    first.performed?.should == !second.performed?
   end
 
   it "runs the handlers for all requests, even if queued in a callback in strange order" do
@@ -181,6 +189,9 @@ describe Typhoeus::Hydra do
     hydra.queue second
     hydra.run
     call_count.should == 4
+    first.performed?.should be_true
+    second.performed?.should be_true
+    third.performed?.should == !fourth.performed?
   end
 
   it "continues queued requests after a memoization hit" do
@@ -199,6 +210,8 @@ describe Typhoeus::Hydra do
     first.response.body.should include("foo")
     second.response.body.should include("foo")
     third.response.body.should include("bar")
+    first.performed?.should == !second.performed?
+    third.performed?.should be_true
   end
 
   it "can turn off memoization for GET requests" do
@@ -211,6 +224,8 @@ describe Typhoeus::Hydra do
     hydra.run
     first.response.body.should include("foo")
     first.response.object_id.should_not == second.response.object_id
+    first.performed?.should be_true
+    second.performed?.should be_true
   end
 
   it "pulls GETs from cache" do
@@ -230,6 +245,7 @@ describe Typhoeus::Hydra do
     hydra.run
     (Time.now - start_time).should < 0.1
     first.response.should == cached_response
+    first.performed?.should be_false
   end
 
   it "sets GET responses to cache when the request has a cache_timeout value" do
