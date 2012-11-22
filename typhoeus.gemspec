@@ -5,10 +5,10 @@
 
 Gem::Specification.new do |s|
   s.name = "typhoeus"
-  s.version = "0.2.4.105"
+  s.version = "0.2.4.106"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
-  s.authors = ["Paul Dix", "David Balatero", "Stefan Kaes"]
+  s.authors = ["Paul Dix", "David Balatero"]
   s.date = "2012-11-21"
   s.description = "Like a modern code version of the mythical beast with 100 serpent heads, Typhoeus runs HTTP requests in parallel while cleanly encapsulating handling logic."
   s.email = "dbalatero@gmail.com"
@@ -106,6 +106,7 @@ Gem::Specification.new do |s|
      "spec/typhoeus/remote_spec.rb",
      "spec/typhoeus/request_spec.rb",
      "spec/typhoeus/response_spec.rb",
+     "spec/typhoeus/retry_spec.rb",
      "spec/typhoeus/utils_spec.rb",
      "examples/file.rb",
      "examples/times.rb",
