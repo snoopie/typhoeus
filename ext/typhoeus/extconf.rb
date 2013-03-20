@@ -6,17 +6,17 @@ require 'mkmf'
 
 ROOT = File.expand_path(File.join(File.dirname(__FILE__), '..', '..'))
 specified_curl = ARGV[0] =~ /^--with-curl/ ? ARGV[0].split("=")[1] : nil
-LIBDIR = specified_curl ? "#{specified_curl}/lib": Config::CONFIG['libdir']
-INCLUDEDIR = specified_curl ? "#{specified_curl}/include" : Config::CONFIG['includedir']
+LIBDIR = specified_curl ? "#{specified_curl}/lib": RbConfig::CONFIG['libdir']
+INCLUDEDIR = specified_curl ? "#{specified_curl}/include" : RbConfig::CONFIG['includedir']
 
 if defined?(RUBY_ENGINE) && RUBY_ENGINE == 'macruby'
   $LIBRUBYARG_STATIC.gsub!(/-static/, '')
 end
 
 $CFLAGS << " #{ENV["CFLAGS"]}"
-if Config::CONFIG['target_os'] == 'mingw32'
+if RbConfig::CONFIG['target_os'] == 'mingw32'
   $CFLAGS << " -DXP_WIN -DXP_WIN32 -DUSE_INCLUDED_VASPRINTF"
-elsif Config::CONFIG['target_os'] == 'solaris2'
+elsif RbConfig::CONFIG['target_os'] == 'solaris2'
   $CFLAGS << " -DUSE_INCLUDED_VASPRINTF"
 else
   $CFLAGS << " -g -DXP_UNIX"
@@ -27,7 +27,7 @@ $LIBPATH << "/opt/local/lib" if use_macports
 
 $CFLAGS << " -O3 -Wall -Wcast-qual -Wwrite-strings -Wconversion -Wmissing-noreturn -Winline"
 
-if Config::CONFIG['target_os'] == 'mingw32'
+if RbConfig::CONFIG['target_os'] == 'mingw32'
   header = File.join(ROOT, 'cross', 'curl-7.19.4.win32', 'include')
   unless find_header('curl/curl.h', header)
     abort "need libcurl"
@@ -50,7 +50,7 @@ else
   end
 end
 
-if Config::CONFIG['target_os'] == 'mingw32'
+if RbConfig::CONFIG['target_os'] == 'mingw32'
   find_library('curl', 'curl_easy_init',
                File.join(ROOT, 'cross', 'curl-7.19.4.win32', 'bin'))
 else

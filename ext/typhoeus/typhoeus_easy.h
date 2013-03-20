@@ -7,8 +7,8 @@
 void init_typhoeus_easy();
 typedef struct {
   const char *memory;
-  int size;
-  int read;
+  long size;
+  long read;
 } RequestChunk;
 
 typedef struct {

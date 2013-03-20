@@ -20,3 +20,11 @@ extern void init_typhoeus_form();
 #define RSTRING_LEN(s) (RSTRING(s)->len)
 
 #endif
+
+#ifndef ARG_UNUSED
+#if defined(__GNUC__)
+#  define ARG_UNUSED  __attribute__ ((unused))
+#else
+#  define ARG_UNUSED
+#endif
+#endif

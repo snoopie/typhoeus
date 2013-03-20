@@ -15,10 +15,12 @@ static void dealloc(CurlMulti *curl_multi) {
 
 static VALUE multi_add_handle(VALUE self, VALUE easy) {
   CurlEasy *curl_easy;
-  Data_Get_Struct(easy, CurlEasy, curl_easy);
   CurlMulti *curl_multi;
-  Data_Get_Struct(self, CurlMulti, curl_multi);
   CURLMcode mcode;
+  VALUE easy_handles;
+
+  Data_Get_Struct(easy, CurlEasy, curl_easy);
+  Data_Get_Struct(self, CurlMulti, curl_multi);
 
   mcode = curl_multi_add_handle(curl_multi->multi, curl_easy->curl);
   if (mcode != CURLM_CALL_MULTI_PERFORM && mcode != CURLM_OK) {
@@ -28,7 +30,7 @@ static VALUE multi_add_handle(VALUE self, VALUE easy) {
   curl_easy_setopt(curl_easy->curl, CURLOPT_PRIVATE, easy);
   curl_multi->active++;
 
-  VALUE easy_handles = rb_iv_get(self, "@easy_handles");
+  easy_handles = rb_iv_get(self, "@easy_handles");
   rb_ary_push(easy_handles, easy);
 
   if (mcode == CURLM_CALL_MULTI_PERFORM) {
@@ -45,14 +47,16 @@ static VALUE multi_add_handle(VALUE self, VALUE easy) {
 
 static VALUE multi_remove_handle(VALUE self, VALUE easy) {
   CurlEasy *curl_easy;
-  Data_Get_Struct(easy, CurlEasy, curl_easy);
   CurlMulti *curl_multi;
+  VALUE easy_handles;
+
+  Data_Get_Struct(easy, CurlEasy, curl_easy);
   Data_Get_Struct(self, CurlMulti, curl_multi);
 
   curl_multi->active--;
   curl_multi_remove_handle(curl_multi->multi, curl_easy->curl);
 
-  VALUE easy_handles = rb_iv_get(self, "@easy_handles");
+  easy_handles = rb_iv_get(self, "@easy_handles");
   rb_ary_delete(easy_handles, easy);
 
   return easy;
@@ -64,6 +68,7 @@ static void multi_read_info(VALUE self, CURLM *multi_handle) {
   CURLcode ecode;
   CURL *easy_handle;
   VALUE easy;
+  long response_code;
 
   /* check for finished easy handles and remove from the multi handle */
   while ((msg = curl_multi_info_read(multi_handle, &msgs_left))) {
@@ -80,7 +85,7 @@ static void multi_read_info(VALUE self, CURLM *multi_handle) {
         rb_raise(rb_eRuntimeError, "error getting easy object: %d: %s", ecode, curl_easy_strerror(ecode));
       }
 
-      long response_code = -1;
+      response_code = -1;
       curl_easy_getinfo(easy_handle, CURLINFO_RESPONSE_CODE, &response_code);
 
       multi_remove_handle(self, easy);
@@ -154,7 +159,7 @@ static VALUE multi_perform(VALUE self) {
     }
 
     tv.tv_sec = timeout / 1000;
-    tv.tv_usec = (timeout * 1000) % 1000000;
+    tv.tv_usec = ((int)timeout * 1000) % 1000000;
 
     /* load the fd sets from the multi handle */
     mcode = curl_multi_fdset(curl_multi->multi, &fdread, &fdwrite, &fdexcep, &maxfd);
@@ -191,13 +196,14 @@ static VALUE multi_cleanup(VALUE self) {
   return Qnil;
 }
 
-static VALUE new(int argc, VALUE *argv, VALUE klass) {
+static VALUE new(int argc, VALUE *argv, VALUE klass ARG_UNUSED) {
   CurlMulti *curl_multi = ALLOC(CurlMulti);
+  VALUE multi;
   curl_multi->multi = curl_multi_init();
   curl_multi->active = 0;
   curl_multi->running = 0;
 
-  VALUE multi = Data_Wrap_Struct(cTyphoeusMulti, 0, dealloc, curl_multi);
+  multi = Data_Wrap_Struct(cTyphoeusMulti, 0, dealloc, curl_multi);
 
   rb_obj_call_init(multi, argc, argv);
 

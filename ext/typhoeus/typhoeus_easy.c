@@ -19,9 +19,10 @@ static void dealloc(CurlEasy *curl_easy) {
 
 static VALUE easy_setopt_string(VALUE self, VALUE opt_name, VALUE parameter) {
   CurlEasy *curl_easy;
+  CURLoption opt;
   Data_Get_Struct(self, CurlEasy, curl_easy);
 
-  CURLoption opt = NUM2LONG(opt_name);
+  opt = NUM2INT(opt_name);
   curl_easy_setopt(curl_easy->curl, opt, StringValuePtr(parameter));
   return opt_name;
 }
@@ -29,19 +30,21 @@ static VALUE easy_setopt_string(VALUE self, VALUE opt_name, VALUE parameter) {
 static VALUE easy_setopt_form(VALUE self, VALUE opt_name, VALUE parameter) {
   CurlEasy *curl_easy;
   CurlForm *curl_form;
+  CURLoption opt;
   Data_Get_Struct(self, CurlEasy, curl_easy);
   Data_Get_Struct(parameter, CurlForm, curl_form);
 
-  CURLoption opt = NUM2LONG(opt_name);
+  opt = NUM2INT(opt_name);
   curl_easy_setopt(curl_easy->curl, opt, curl_form->first);
   return opt_name;
 }
 
 static VALUE easy_setopt_long(VALUE self, VALUE opt_name, VALUE parameter) {
   CurlEasy *curl_easy;
+  CURLoption opt;
   Data_Get_Struct(self, CurlEasy, curl_easy);
 
-  CURLoption opt = NUM2LONG(opt_name);
+  opt = NUM2INT(opt_name);
   curl_easy_setopt(curl_easy->curl, opt, NUM2LONG(parameter));
   return opt_name;
 }
@@ -49,9 +52,10 @@ static VALUE easy_setopt_long(VALUE self, VALUE opt_name, VALUE parameter) {
 static VALUE easy_getinfo_string(VALUE self, VALUE info) {
   char *info_string;
   CurlEasy *curl_easy;
+  CURLoption opt;
   Data_Get_Struct(self, CurlEasy, curl_easy);
 
-  CURLoption opt = NUM2LONG(info);
+  opt = NUM2INT(info);
   curl_easy_getinfo(curl_easy->curl, opt, &info_string);
 
   return rb_str_new2(info_string);
@@ -60,9 +64,10 @@ static VALUE easy_getinfo_string(VALUE self, VALUE info) {
 static VALUE easy_getinfo_long(VALUE self, VALUE info) {
   long info_long;
   CurlEasy *curl_easy;
+  CURLoption opt;
   Data_Get_Struct(self, CurlEasy, curl_easy);
 
-  CURLoption opt = NUM2LONG(info);
+  opt = NUM2INT(info);
   curl_easy_getinfo(curl_easy->curl, opt, &info_long);
 
   return LONG2NUM(info_long);
@@ -71,9 +76,10 @@ static VALUE easy_getinfo_long(VALUE self, VALUE info) {
 static VALUE easy_getinfo_double(VALUE self, VALUE info) {
   double info_double = 0;
   CurlEasy *curl_easy;
+  CURLoption opt;
   Data_Get_Struct(self, CurlEasy, curl_easy);
 
-  CURLoption opt = NUM2LONG(info);
+  opt = NUM2INT(info);
   curl_easy_getinfo(curl_easy->curl, opt, &info_double);
 
   return rb_float_new(info_double);
@@ -96,15 +102,15 @@ static size_t write_data_handler(char *stream, size_t size, size_t nmemb, VALUE 
 }
 
 static size_t read_callback(void *ptr, size_t size, size_t nmemb, void *data) {
-  size_t realsize = size * nmemb;
+  long realsize = size * nmemb;
   RequestChunk *mem = (RequestChunk *)data;
 
   if (realsize > mem->size - mem->read) {
     realsize = mem->size - mem->read;
   }
 
-  if (realsize != 0) {
-    memcpy(ptr, &(mem->memory[mem->read]), realsize);
+  if (realsize > 0) {
+    memcpy(ptr, &(mem->memory[mem->read]), (size_t)realsize);
     mem->read += realsize;
   }
 
@@ -159,7 +165,7 @@ static VALUE easy_set_headers(VALUE self) {
   return Qnil;
 }
 
-static VALUE easy_set_request_body(VALUE self, VALUE data, VALUE content_length_header) {
+static VALUE easy_set_request_body(VALUE self, VALUE data, VALUE content_length_header ARG_UNUSED) {
   CurlEasy *curl_easy;
   Data_Get_Struct(self, CurlEasy, curl_easy);
 
@@ -182,17 +188,19 @@ static VALUE easy_escape(VALUE self, VALUE data, VALUE length) {
   return rb_str_new2(curl_easy_escape(curl_easy->curl, StringValuePtr(data), (int)NUM2INT(length)));
 }
 
-static VALUE version(VALUE self) {
+static VALUE version(VALUE self ARG_UNUSED) {
   return rb_str_new2(curl_version());
 }
 
-static VALUE new(int argc, VALUE *argv, VALUE klass) {
+static VALUE new(int argc, VALUE *argv, VALUE klass ARG_UNUSED) {
+  VALUE easy;
   CURL *curl = curl_easy_init();
   CurlEasy *curl_easy = ALLOC(CurlEasy);
+
   curl_easy->curl = curl;
   curl_easy->headers = NULL;
   curl_easy->request_chunk = NULL;
-  VALUE easy = Data_Wrap_Struct(cTyphoeusEasy, 0, dealloc, curl_easy);
+  easy = Data_Wrap_Struct(cTyphoeusEasy, 0, dealloc, curl_easy);
 
   set_response_handlers(easy, curl);
 

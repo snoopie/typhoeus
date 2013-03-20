@@ -38,12 +38,13 @@ static VALUE formadd_param(VALUE self, VALUE name, VALUE value) {
   ));
 }
 
-static VALUE new(int argc, VALUE *argv, VALUE klass) {
+static VALUE new(int argc, VALUE *argv, VALUE klass ARG_UNUSED) {
   CurlForm *curl_form = ALLOC(CurlForm);
+  VALUE form;
   curl_form->first = NULL;
   curl_form->last = NULL;
 
-  VALUE form = Data_Wrap_Struct(cTyphoeusForm, 0, dealloc, curl_form);
+  form = Data_Wrap_Struct(cTyphoeusForm, 0, dealloc, curl_form);
 
   rb_obj_call_init(form, argc, argv);
 
