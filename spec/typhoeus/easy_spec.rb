@@ -292,6 +292,16 @@ describe Typhoeus::Easy do
       request['rack.request.form_vars'].should == 'a=a%3Db%26c%0Ax+x&b=2'
     end
 
+    it "should set content length correctly for a utf-8 string" do
+      body = "this is a body with utf-8 content: Motörhead!  WHÖÖ!"
+      easy = Typhoeus::Easy.new
+      easy.url    = "http://localhost:3002"
+      easy.method = :post
+      easy.should_receive(:set_option).with(Typhoeus::Easy::OPTION_VALUES[:CURLOPT_POSTFIELDSIZE], 55)
+      easy.should_receive(:set_option).with(Typhoeus::Easy::OPTION_VALUES[:CURLOPT_COPYPOSTFIELDS], body)
+      easy.request_body = body
+    end
+
     it "should handle a file upload, as multipart" do
       easy = Typhoeus::Easy.new
       easy.url    = "http://localhost:3002/file"
