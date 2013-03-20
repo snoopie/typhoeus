@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = "typhoeus"
-  s.version = "0.2.4.107"
+  s.version = "0.2.4.108"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Paul Dix", "David Balatero"]
-  s.date = "2012-11-22"
+  s.date = "2013-03-20"
   s.description = "Like a modern code version of the mythical beast with 100 serpent heads, Typhoeus runs HTTP requests in parallel while cleanly encapsulating handling logic."
   s.email = "dbalatero@gmail.com"
   s.extensions = ["ext/typhoeus/extconf.rb"]
@@ -89,10 +89,13 @@ Gem::Specification.new do |s|
   s.homepage = "http://github.com/dbalatero/typhoeus"
   s.rdoc_options = ["--charset=UTF-8"]
   s.require_paths = ["lib"]
-  s.rubygems_version = "1.8.24"
+  s.rubygems_version = "1.8.25"
   s.summary = "A library for interacting with web services (and building SOAs) at blinding speed."
   s.test_files = [
-    "spec/servers/app.rb",
+    "examples/file.rb",
+     "examples/times.rb",
+     "examples/twitter.rb",
+     "spec/servers/app.rb",
      "spec/spec_helper.rb",
      "spec/typhoeus/easy_spec.rb",
      "spec/typhoeus/filter_spec.rb",
@@ -107,10 +110,7 @@ Gem::Specification.new do |s|
      "spec/typhoeus/request_spec.rb",
      "spec/typhoeus/response_spec.rb",
      "spec/typhoeus/retry_spec.rb",
-     "spec/typhoeus/utils_spec.rb",
-     "examples/file.rb",
-     "examples/times.rb",
-     "examples/twitter.rb"
+     "spec/typhoeus/utils_spec.rb"
   ]
 
   if s.respond_to? :specification_version then
