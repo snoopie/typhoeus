@@ -320,6 +320,17 @@ describe Typhoeus::Easy do
 
       result['request-content-type'].should =~ /multipart/
     end
+
+    it "should not encode parameters when multipart" do
+      easy = Typhoeus::Easy.new
+      easy.url    = "http://localhost:3002/file"
+      easy.method = :post
+      easy.params = {:other => "abc def", :file => File.open(File.expand_path(File.dirname(__FILE__) + "/../fixtures/placeholder.txt"), "r")}
+      easy.perform
+      easy.response_code.should == 200
+      result = JSON.parse(easy.response_body)
+      result['other'].should == 'abc def'
+    end
   end
   
   describe "delete" do
