@@ -4,8 +4,8 @@ require 'sinatra'
 require 'json'
 require 'zlib'
 
-@@fail_count = 0
-@@codes_to_return = [500]
+$fail_count = 0
+$codes_to_return = [500]
 
 post '/file' do
   {
@@ -18,12 +18,12 @@ post '/file' do
 end
 
 get '/fail/:number' do
-  if @@fail_count >= params[:number].to_i
+  if $fail_count >= params[:number].to_i
     "ok"
   else
-    @@fail_count += 1
+    $fail_count += 1
     error 500, "oh noes!"
-   end
+  end
 end
 
 get '/fail_forever' do
@@ -39,15 +39,15 @@ get '/bad_redirect' do
 end
 
 get '/flaky/set' do
-  @@codes_to_return = request.params['codes'].split(',').map(&:to_i)
-  [200, %Q{"message":"ok", "code":200, "params":#{@@codes_to_return.inspect}}]
+  $codes_to_return = request.params['codes'].split(',').map(&:to_i)
+  [200, %Q{"message":"ok", "code":200, "params":#{$codes_to_return.inspect}}]
 end
 
 def flaky_return_code
-  if @@codes_to_return.size == 1
-    @@codes_to_return.first
+  if $codes_to_return.size == 1
+    $codes_to_return.first
   else
-    @@codes_to_return.shift
+    $codes_to_return.shift
   end
 end
 
