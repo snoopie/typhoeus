@@ -22,29 +22,26 @@ else
   $CFLAGS << " -g -DXP_UNIX"
 end
 
-use_macports = !(defined?(RUBY_ENGINE) && RUBY_ENGINE != 'ruby')
-$LIBPATH << "/opt/local/lib" if use_macports
+#$LIBPATH.unshift "/opt/local/lib"
+#$LIBPATH.unshift "/usr/local/lib"
 
 $CFLAGS << " -O3 -Wall -Wcast-qual -Wwrite-strings -Wconversion -Wmissing-noreturn -Winline"
+
+found = pkg_config("libcurl") && have_header("curl/curl.h")
 
 if RbConfig::CONFIG['target_os'] == 'mingw32'
   header = File.join(ROOT, 'cross', 'curl-7.19.4.win32', 'include')
   unless find_header('curl/curl.h', header)
     abort "need libcurl"
   end
-else
+elsif !found
   HEADER_DIRS = [
-    File.join(INCLUDEDIR, "curl"),
     INCLUDEDIR,
-    '/usr/include/curl',
-    '/usr/local/include/curl'
+    '/usr/local/include',
+    '/usr/include'
   ]
 
-  [
-    '/opt/local/include/curl',
-    '/opt/local/include',
-  ].each { |x| HEADER_DIRS.unshift(x) } if use_macports
-
+  puts HEADER_DIRS.inspect
   unless find_header('curl/curl.h', *HEADER_DIRS)
     abort "need libcurl"
   end
@@ -53,13 +50,8 @@ end
 if RbConfig::CONFIG['target_os'] == 'mingw32'
   find_library('curl', 'curl_easy_init',
                File.join(ROOT, 'cross', 'curl-7.19.4.win32', 'bin'))
-else
-  find_library('curl', 'curl_easy_init',
-               LIBDIR,
-               '/opt/local/lib',
-               '/usr/local/lib',
-               '/usr/lib'
-    )
+elsif !found
+  find_library('curl', 'curl_easy_init', LIBDIR, '/usr/local/lib', '/usr/lib')
 end
 
 create_makefile("typhoeus/native")
