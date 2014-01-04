@@ -98,12 +98,12 @@ describe Typhoeus::HydraMock do
         Typhoeus::Request.new("http://localhost:3000", options.merge(:method => :get))
       end
 
-      def mock(options = {})
+      def hydra_mock(options = {})
         Typhoeus::HydraMock.new("http://localhost:3000", :get, options)
       end
 
       context 'when no :headers option is given' do
-        subject { mock }
+        subject { hydra_mock }
 
         it "matches regardless of whether or not the request has headers" do
           subject.matches?(request(:headers => nil)).should be_true
@@ -114,7 +114,7 @@ describe Typhoeus::HydraMock do
 
       [nil, {}].each do |value|
         context "for :headers => #{value.inspect}" do
-          subject { mock(:headers => value) }
+          subject { hydra_mock(:headers => value) }
 
           it "matches when the request has no headers" do
             subject.matches?(request(:headers => nil)).should be_true
@@ -129,7 +129,7 @@ describe Typhoeus::HydraMock do
 
       context 'for :headers => [a hash]' do
         it 'does not match if the request has no headers' do
-          m = mock(:headers => { 'A' => 'B', 'C' => 'D' })
+          m = hydra_mock(:headers => { 'A' => 'B', 'C' => 'D' })
 
           m.matches?(request).should be_false
           m.matches?(request(:headers => nil)).should be_false
@@ -137,7 +137,7 @@ describe Typhoeus::HydraMock do
         end
 
         it 'does not match if the request lacks any of the given headers' do
-          mock(
+          hydra_mock(
             :headers => { 'A' => 'B', 'C' => 'D' }
           ).matches?(request(
             :headers => { 'A' => 'B' }
@@ -145,7 +145,7 @@ describe Typhoeus::HydraMock do
         end
 
         it 'does not match if any of the specified values are different from the request value' do
-          mock(
+          hydra_mock(
             :headers => { 'A' => 'B', 'C' => 'D' }
           ).matches?(request(
             :headers => { 'A' => 'B', 'C' => 'E' }
@@ -153,7 +153,7 @@ describe Typhoeus::HydraMock do
         end
 
         it 'matches if the given hash is exactly equal to the request headers' do
-          mock(
+          hydra_mock(
             :headers => { 'A' => 'B', 'C' => 'D' }
           ).matches?(request(
             :headers => { 'A' => 'B', 'C' => 'D' }
@@ -161,7 +161,7 @@ describe Typhoeus::HydraMock do
         end
 
         it 'matches even if the request has additional headers not specified in the mock' do
-          mock(
+          hydra_mock(
             :headers => { 'A' => 'B', 'C' => 'D' }
           ).matches?(request(
             :headers => { 'A' => 'B', 'C' => 'D', 'E' => 'F' }
@@ -169,7 +169,7 @@ describe Typhoeus::HydraMock do
         end
 
         it 'matches even if the casing of the header keys is different between the mock and request' do
-          mock(
+          hydra_mock(
             :headers => { 'A' => 'B', 'c' => 'D' }
           ).matches?(request(
             :headers => { 'a' => 'B', 'C' => 'D' }
@@ -177,7 +177,7 @@ describe Typhoeus::HydraMock do
         end
 
         it 'matches if the mocked values are regexes and match the request values' do
-          mock(
+          hydra_mock(
             :headers => { 'A' => /foo/, }
           ).matches?(request(
             :headers => { 'A' => 'foo bar' }
@@ -185,7 +185,7 @@ describe Typhoeus::HydraMock do
         end
 
         it 'does not match if the mocked values are regexes and do not match the request values' do
-          mock(
+          hydra_mock(
             :headers => { 'A' => /foo/, }
           ).matches?(request(
             :headers => { 'A' => 'bar' }
@@ -194,7 +194,7 @@ describe Typhoeus::HydraMock do
 
         context 'when a header is specified as an array' do
           it 'matches when the request header has the same array' do
-            mock(
+            hydra_mock(
               :headers => { 'Accept' => ['text/html', 'text/plain'] }
             ).matches?(request(
               :headers => { 'Accept' => ['text/html', 'text/plain'] }
@@ -202,7 +202,7 @@ describe Typhoeus::HydraMock do
           end
 
           it 'matches when the request header is a single value and the mock array has the same value' do
-            mock(
+            hydra_mock(
               :headers => { 'Accept' => ['text/html'] }
             ).matches?(request(
               :headers => { 'Accept' => 'text/html' }
@@ -210,7 +210,7 @@ describe Typhoeus::HydraMock do
           end
 
           it 'matches even when the request header array is ordered differently' do
-            mock(
+            hydra_mock(
               :headers => { 'Accept' => ['text/html', 'text/plain'] }
             ).matches?(request(
               :headers => { 'Accept' => ['text/plain', 'text/html'] }
@@ -218,7 +218,7 @@ describe Typhoeus::HydraMock do
           end
 
           it 'does not match when the request header array lacks a value' do
-            mock(
+            hydra_mock(
               :headers => { 'Accept' => ['text/html', 'text/plain'] }
             ).matches?(request(
               :headers => { 'Accept' => ['text/plain'] }
@@ -226,7 +226,7 @@ describe Typhoeus::HydraMock do
           end
 
           it 'does not match when the request header array has an extra value' do
-            mock(
+            hydra_mock(
               :headers => { 'Accept' => ['text/html', 'text/plain'] }
             ).matches?(request(
               :headers => { 'Accept' => ['text/html', 'text/plain', 'application/xml'] }
@@ -234,7 +234,7 @@ describe Typhoeus::HydraMock do
           end
 
           it 'does not match when the request header is not an array' do
-            mock(
+            hydra_mock(
               :headers => { 'Accept' => ['text/html', 'text/plain'] }
             ).matches?(request(
               :headers => { 'Accept' => 'text/html' }

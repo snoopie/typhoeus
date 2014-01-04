@@ -107,7 +107,7 @@ describe Typhoeus::RemoteMethod do
     end
     
     it "should call response blocks and clear the methods that have been called" do
-      response_block_called = mock('response_block')
+      response_block_called = double('response_block')
       response_block_called.should_receive(:call).exactly(1).times
       
       @m.add_response_block(lambda {|res| res.should == :foo; response_block_called.call}, @args, @options)

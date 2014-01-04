@@ -239,7 +239,7 @@ describe Typhoeus::Hydra do
     end
 
     first  = Typhoeus::Request.new("http://localhost:3000/foo", :params => {:delay => 1})
-    cached_response = stub("foo", :code => 200)
+    cached_response = double("foo", :code => 200)
     @cache.set(first.cache_key, cached_response, 60)
     hydra.queue first
     hydra.run
@@ -281,7 +281,7 @@ describe Typhoeus::Hydra do
     first  = Typhoeus::Request.new("http://localhost:3000/first", :params => {:delay => 1})
     second = Typhoeus::Request.new("http://localhost:3000/second", :params => {:delay => 1})
     third = Typhoeus::Request.new("http://localhost:3000/third", :params => {:delay => 1})
-    second_response = stub("second", :code => 200)
+    second_response = double("second", :code => 200)
     @cache.set(second.cache_key, second_response, 60)
     hydra.queue first
     hydra.queue second

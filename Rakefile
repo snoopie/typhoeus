@@ -1,7 +1,7 @@
 $LOAD_PATH.unshift(File.dirname(__FILE__))
 
-require "spec"
-require "spec/rake/spectask"
+require "rspec"
+require "rspec/core/rake_task"
 require "lib/typhoeus/version"
 
 begin
@@ -26,9 +26,8 @@ rescue LoadError
   puts "Jeweler not available. Install it with: gem install jeweler"
 end
 
-Spec::Rake::SpecTask.new do |t|
-  t.spec_opts = ['--options', "\"#{File.dirname(__FILE__)}/spec/spec.opts\""]
-  t.spec_files = FileList['spec/**/*_spec.rb']
+RSpec::Core::RakeTask.new(:spec) do |t|
+  t.rspec_opts = ['--options', "\"#{File.dirname(__FILE__)}/spec/spec.opts\""]
 end
 
 task :install do
