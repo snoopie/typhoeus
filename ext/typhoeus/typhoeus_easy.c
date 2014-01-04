@@ -22,7 +22,7 @@ static VALUE easy_setopt_string(VALUE self, VALUE opt_name, VALUE parameter) {
   CURLoption opt;
   Data_Get_Struct(self, CurlEasy, curl_easy);
 
-  opt = NUM2INT(opt_name);
+  opt = NUM2UINT(opt_name);
   curl_easy_setopt(curl_easy->curl, opt, StringValuePtr(parameter));
   return opt_name;
 }
@@ -34,7 +34,7 @@ static VALUE easy_setopt_form(VALUE self, VALUE opt_name, VALUE parameter) {
   Data_Get_Struct(self, CurlEasy, curl_easy);
   Data_Get_Struct(parameter, CurlForm, curl_form);
 
-  opt = NUM2INT(opt_name);
+  opt = NUM2UINT(opt_name);
   curl_easy_setopt(curl_easy->curl, opt, curl_form->first);
   return opt_name;
 }
@@ -44,7 +44,7 @@ static VALUE easy_setopt_long(VALUE self, VALUE opt_name, VALUE parameter) {
   CURLoption opt;
   Data_Get_Struct(self, CurlEasy, curl_easy);
 
-  opt = NUM2INT(opt_name);
+  opt = NUM2UINT(opt_name);
   curl_easy_setopt(curl_easy->curl, opt, NUM2LONG(parameter));
   return opt_name;
 }
@@ -52,10 +52,10 @@ static VALUE easy_setopt_long(VALUE self, VALUE opt_name, VALUE parameter) {
 static VALUE easy_getinfo_string(VALUE self, VALUE info) {
   char *info_string;
   CurlEasy *curl_easy;
-  CURLoption opt;
+  CURLINFO opt;
   Data_Get_Struct(self, CurlEasy, curl_easy);
 
-  opt = NUM2INT(info);
+  opt = NUM2UINT(info);
   curl_easy_getinfo(curl_easy->curl, opt, &info_string);
 
   return rb_str_new2(info_string);
@@ -64,10 +64,10 @@ static VALUE easy_getinfo_string(VALUE self, VALUE info) {
 static VALUE easy_getinfo_long(VALUE self, VALUE info) {
   long info_long;
   CurlEasy *curl_easy;
-  CURLoption opt;
+  CURLINFO opt;
   Data_Get_Struct(self, CurlEasy, curl_easy);
 
-  opt = NUM2INT(info);
+  opt = NUM2UINT(info);
   curl_easy_getinfo(curl_easy->curl, opt, &info_long);
 
   return LONG2NUM(info_long);
@@ -76,10 +76,10 @@ static VALUE easy_getinfo_long(VALUE self, VALUE info) {
 static VALUE easy_getinfo_double(VALUE self, VALUE info) {
   double info_double = 0;
   CurlEasy *curl_easy;
-  CURLoption opt;
+  CURLINFO opt;
   Data_Get_Struct(self, CurlEasy, curl_easy);
 
-  opt = NUM2INT(info);
+  opt = NUM2UINT(info);
   curl_easy_getinfo(curl_easy->curl, opt, &info_double);
 
   return rb_float_new(info_double);
@@ -102,7 +102,7 @@ static size_t write_data_handler(char *stream, size_t size, size_t nmemb, VALUE 
 }
 
 static size_t read_callback(void *ptr, size_t size, size_t nmemb, void *data) {
-  long realsize = size * nmemb;
+  long realsize = (long)(size * nmemb);
   RequestChunk *mem = (RequestChunk *)data;
 
   if (realsize > mem->size - mem->read) {
@@ -114,7 +114,7 @@ static size_t read_callback(void *ptr, size_t size, size_t nmemb, void *data) {
     mem->read += realsize;
   }
 
-  return realsize;
+  return (size_t)realsize;
 }
 
 static void set_response_handlers(VALUE easy, CURL *curl) {
