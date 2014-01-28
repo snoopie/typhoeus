@@ -115,6 +115,25 @@ describe Typhoeus::Hydra do
     completed.should < 10
   end
 
+  it "abort! resets easy handles and caches" do
+    hydra  = Typhoeus::Hydra.new(:max_concurrency => 1)
+    2.times do
+      hydra.queue Typhoeus::Request.new("http://localhost:3000/foo")
+    end
+
+    hydra.instance_variable_get("@queued_requests").size.should == 1
+    hydra.instance_variable_get("@memoized_requests").size.should == 1
+    hydra.instance_variable_get("@running_requests").should == 1
+    hydra.instance_variable_get("@multi").easy_handles.size == 1
+
+    hydra.abort!
+
+    hydra.instance_variable_get("@queued_requests").size.should == 0
+    hydra.instance_variable_get("@memoized_requests").size.should == 0
+    hydra.instance_variable_get("@running_requests").should == 0
+    hydra.instance_variable_get("@multi").easy_handles.size == 0
+  end
+
   it "has a cache_setter proc" do
     hydra = Typhoeus::Hydra.new
     hydra.cache_setter do |request|
