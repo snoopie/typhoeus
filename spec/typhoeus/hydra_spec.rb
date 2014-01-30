@@ -74,6 +74,30 @@ describe Typhoeus::Hydra do
     third.performed?.should be_true
   end
 
+  it "aborts all other and queued requests if an exception raises in a callback" do
+    invoked_callbacks = 0
+
+    hydra  = Typhoeus::Hydra.new(:max_concurrency => 1)
+    first  = Typhoeus::Request.new("http://localhost:3000/first")
+    second = Typhoeus::Request.new("http://localhost:3001/second")
+    third  = Typhoeus::Request.new("http://localhost:3001/third")
+
+    first.on_complete do
+      invoked_callbacks += 1
+      raise "foobar"
+    end
+    second.on_complete { invoked_callbacks += 1 }
+    third.on_complete  { invoked_callbacks += 1 }
+    [first, second, third].each {|request| hydra.queue request }
+
+    expect { hydra.run }.to raise_error(RuntimeError)
+
+    # at this time the second request is already marked as performed
+    third.performed?.should be_false
+    invoked_callbacks.should == 1
+    hydra.instance_variable_get("@queued_requests").should == []
+  end
+
   it "should store the curl return codes on the reponses" do
     hydra  = Typhoeus::Hydra.new
     first  = Typhoeus::Request.new("http://localhost:3001/?delay=1", :timeout => 100)
