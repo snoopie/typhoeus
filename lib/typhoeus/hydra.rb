@@ -49,8 +49,7 @@ module Typhoeus
 
     # in addition to abort, also releases running requests and clears caches
     def abort!
-      abort
-      reset_easy_handles_and_caches
+      cleanup_performed_and_abort_queued_requests
     end
 
     def clear_cache_callbacks
@@ -109,7 +108,7 @@ module Typhoeus
 
       @multi.perform
     ensure
-      reset_easy_handles_and_caches
+      cleanup_performed_and_abort_queued_requests
     end
 
     def disable_memoization
@@ -289,6 +288,12 @@ module Typhoeus
     end
     private :response_from_easy
 
+    def cleanup_performed_and_abort_queued_requests
+      @queued_requests.clear
+      reset_easy_handles_and_caches
+    end
+    private :cleanup_performed_and_abort_queued_requests
+
     def reset_easy_handles_and_caches
       @multi.reset_easy_handles {|easy| release_easy_object(easy) }
       @memoized_requests = {}
@@ -297,5 +302,6 @@ module Typhoeus
       @running_requests = 0
     end
     private :reset_easy_handles_and_caches
+
   end
 end
