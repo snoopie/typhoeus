@@ -2,3 +2,5 @@
 *.gem
 .bundle
 .idea
+.rvmrc
+.ruby-version
