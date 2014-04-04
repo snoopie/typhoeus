@@ -82,6 +82,10 @@ module Typhoeus
       curl_return_code == 28
     end
 
+    def connect_timed_out?
+      timed_out? && (connect_time.nil? || connect_time == 0)
+    end
+
     private
 
       def first_header_line

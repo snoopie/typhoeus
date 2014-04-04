@@ -13,6 +13,39 @@ describe Typhoeus::Response do
     end
   end
 
+  describe "connect_timed_out?" do
+    before(:all) do
+      @response = Typhoeus::Response.new
+    end
+
+    it "returns true if timed out and connect time is 0" do
+      @response.stub(:timed_out?).and_return(true)
+      @response.stub(:connect_time).and_return(0)
+
+      @response.connect_timed_out?.should be_true
+    end
+
+    it "returns true if timed out and connect time is nil" do
+      @response.stub(:timed_out?).and_return(true)
+      @response.stub(:connect_time).and_return(nil)
+
+      @response.connect_timed_out?.should be_true
+    end
+
+    it "returns false if not timed out" do
+      @response.stub(:timed_out?).and_return(false)
+
+      @response.connect_timed_out?.should be_false
+    end
+
+    it "returns false if timed out but not because of connect timeout" do
+      @response.stub(:timed_out?).and_return(true)
+      @response.stub(:connect_time).and_return(0.1)
+
+      @response.connect_timed_out?.should be_false
+    end
+  end
+
   describe "initialize" do
     it "should store headers_hash" do
       response = Typhoeus::Response.new(:headers_hash => {})
@@ -43,15 +76,15 @@ describe Typhoeus::Response do
     it "should return nil for http version if none is given and no header is given" do
       Typhoeus::Response.new.http_version.should be_nil
     end
-    
+
     it "should store response_headers" do
       Typhoeus::Response.new(:headers => "a header!").headers.should == "a header!"
     end
-    
+
     it "should store response_body" do
       Typhoeus::Response.new(:body => "a body!").body.should == "a body!"
     end
-    
+
     it "should store request_time" do
       Typhoeus::Response.new(:time => 1.23).time.should == 1.23
     end

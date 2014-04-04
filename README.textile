@@ -204,6 +204,12 @@ hydra.run
 request.response.code => 200
 </pre>
 
+You can also automatically retry connect timeouts:
+
+<pre>
+Typhoeus::Hydra.new(:retry_connect_timeouts => true) # false by default
+</pre>
+
 You can disable retries on a per request basis:
 
 <pre>

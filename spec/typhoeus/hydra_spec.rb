@@ -450,6 +450,37 @@ describe Typhoeus::Hydra do
 
     request.response.code.should == 302
   end
+
+  describe "retry_request?" do
+    before(:all) do
+      @hydra    = Typhoeus::Hydra.new
+      @request  = Typhoeus::Request.new("/foo", :method => :get)
+      @response = Typhoeus::Response.new
+    end
+
+    context "when retry_connect_timeouts is disabled" do
+      it "returns false on connect timeout" do
+        @response.stub(:connect_timed_out?).and_return(true)
+        @hydra.retry_request?(@request, @response).should be_false
+      end
+    end
+
+    context "when retry_connect_timeouts is enabled" do
+      before(:all) do
+        @hydra.retry_connect_timeouts = true
+      end
+
+      it "returns true on connect timeout" do
+        @response.stub(:connect_timed_out?).and_return(true)
+        @hydra.retry_request?(@request, @response).should be_true
+      end
+
+      it "returns false on normal timeout" do
+        @response.stub(:connect_timed_out?).and_return(false)
+        @hydra.retry_request?(@request, @response).should be_false
+      end
+    end
+  end
 end
 
 describe Typhoeus::Hydra::Stubbing do
