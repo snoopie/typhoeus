@@ -231,8 +231,7 @@ module Typhoeus
     end
 
     def retry_request?(request, response)
-      :get == request.method &&
-      (retry_codes.include?(response.code) || (retry_connect_timeouts? && response.connect_timed_out?)) &&
+      ((:get == request.method && retry_codes.include?(response.code)) || (retry_connect_timeouts? && response.connect_timed_out?)) &&
       !request.requeued? &&
       request.retry?
     end
