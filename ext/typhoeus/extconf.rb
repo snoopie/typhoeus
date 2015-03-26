@@ -27,7 +27,14 @@ end
 
 $CFLAGS << " -O3 -Wall -Wcast-qual -Wwrite-strings -Wconversion -Wmissing-noreturn -Winline"
 
-found = pkg_config("libcurl") && have_header("curl/curl.h")
+if File.directory?('/opt/curl')
+  $INCFLAGS = '-I/opt/curl/include ' + $INCFLAGS
+  $LIBPATH.unshift('/opt/curl/lib')
+  $libs << ' -lcurl'
+  found = true
+else
+  found = pkg_config("libcurl") && have_header("curl/curl.h")
+end
 
 if RbConfig::CONFIG['target_os'] == 'mingw32'
   header = File.join(ROOT, 'cross', 'curl-7.19.4.win32', 'include')
