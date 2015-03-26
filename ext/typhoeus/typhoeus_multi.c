@@ -131,7 +131,11 @@ static VALUE multi_perform(VALUE self) {
   CURLMcode mcode;
   CurlMulti *curl_multi;
   int maxfd, rc;
-  fd_set fdread, fdwrite, fdexcep;
+  rb_fdset_t fdread, fdwrite, fdexcep;
+
+  rb_fd_init(&fdread);
+  rb_fd_init(&fdwrite);
+  rb_fd_init(&fdexcep);
 
   long timeout;
   struct timeval tv = {0, 0};
@@ -140,9 +144,9 @@ static VALUE multi_perform(VALUE self) {
 
   rb_curl_multi_run( self, curl_multi->multi, &(curl_multi->running) );
   while(curl_multi->running) {
-    FD_ZERO(&fdread);
-    FD_ZERO(&fdwrite);
-    FD_ZERO(&fdexcep);
+    rb_fd_zero(&fdread);
+    rb_fd_zero(&fdwrite);
+    rb_fd_zero(&fdexcep);
 
     /* get the curl suggested time out */
     mcode = curl_multi_timeout(curl_multi->multi, &timeout);
@@ -162,12 +166,12 @@ static VALUE multi_perform(VALUE self) {
     tv.tv_usec = ((int)timeout * 1000) % 1000000;
 
     /* load the fd sets from the multi handle */
-    mcode = curl_multi_fdset(curl_multi->multi, &fdread, &fdwrite, &fdexcep, &maxfd);
+    mcode = curl_multi_fdset(curl_multi->multi, fdread.fdset, fdwrite.fdset, fdexcep.fdset, &maxfd);
     if (mcode != CURLM_OK) {
       rb_raise(rb_eRuntimeError, "an error occured getting the fdset: %d: %s", mcode, curl_multi_strerror(mcode));
     }
 
-    rc = rb_thread_select(maxfd+1, &fdread, &fdwrite, &fdexcep, &tv);
+    rc = rb_thread_fd_select(maxfd+1, &fdread, &fdwrite, &fdexcep, &tv);
     if (rc < 0) {
       rb_raise(rb_eRuntimeError, "error on thread select: %d", errno);
     }
