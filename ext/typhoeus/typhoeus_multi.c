@@ -127,15 +127,30 @@ static VALUE fire_and_forget(VALUE self) {
   return Qnil;
 }
 
+#define FD_SET_INIT do { \
+  rb_fd_init(&fdread);   \
+  rb_fd_init(&fdwrite);  \
+  rb_fd_init(&fdexcep);  \
+  } while (0);
+
+#define FD_SET_ZERO do { \
+  rb_fd_zero(&fdread);   \
+  rb_fd_zero(&fdwrite);  \
+  rb_fd_zero(&fdexcep);  \
+  } while (0);
+
+#define FD_SET_TERM do { \
+  rb_fd_term(&fdread);   \
+  rb_fd_term(&fdwrite);  \
+  rb_fd_term(&fdexcep);  \
+  } while (0);
+
 static VALUE multi_perform(VALUE self) {
   CURLMcode mcode;
   CurlMulti *curl_multi;
   int maxfd, rc;
   rb_fdset_t fdread, fdwrite, fdexcep;
-
-  rb_fd_init(&fdread);
-  rb_fd_init(&fdwrite);
-  rb_fd_init(&fdexcep);
+  FD_SET_INIT;
 
   long timeout;
   struct timeval tv = {0, 0};
@@ -144,15 +159,14 @@ static VALUE multi_perform(VALUE self) {
 
   rb_curl_multi_run( self, curl_multi->multi, &(curl_multi->running) );
   while(curl_multi->running) {
-    rb_fd_zero(&fdread);
-    rb_fd_zero(&fdwrite);
-    rb_fd_zero(&fdexcep);
+    FD_SET_ZERO;
 
     /* get the curl suggested time out */
     mcode = curl_multi_timeout(curl_multi->multi, &timeout);
     if (mcode != CURLM_OK) {
+      FD_SET_TERM;
       rb_raise(rb_eRuntimeError, "an error occured getting the timeout: %d: %s", mcode, curl_multi_strerror(mcode));
-          }
+    }
 
     if (timeout == 0) { /* no delay */
       rb_curl_multi_run( self, curl_multi->multi, &(curl_multi->running) );
@@ -168,20 +182,20 @@ static VALUE multi_perform(VALUE self) {
     /* load the fd sets from the multi handle */
     mcode = curl_multi_fdset(curl_multi->multi, fdread.fdset, fdwrite.fdset, fdexcep.fdset, &maxfd);
     if (mcode != CURLM_OK) {
+      FD_SET_TERM;
       rb_raise(rb_eRuntimeError, "an error occured getting the fdset: %d: %s", mcode, curl_multi_strerror(mcode));
     }
 
     rc = rb_thread_fd_select(maxfd+1, &fdread, &fdwrite, &fdexcep, &tv);
     if (rc < 0) {
+      FD_SET_TERM;
       rb_raise(rb_eRuntimeError, "error on thread select: %d", errno);
     }
     rb_curl_multi_run( self, curl_multi->multi, &(curl_multi->running) );
 
   }
 
-  rb_fd_term (&fdread);
-  rb_fd_term (&fdwrite);
-  rb_fd_term (&fdexcep);
+  FD_SET_TERM;
 
   return Qnil;
 }
@@ -203,6 +217,10 @@ static VALUE multi_cleanup(VALUE self) {
 
   return Qnil;
 }
+
+#undef FD_SET_INIT
+#undef FD_SET_ZERO
+#undef FD_SET_TERM
 
 static VALUE new(int argc, VALUE *argv, VALUE klass ARG_UNUSED) {
   CurlMulti *curl_multi = ALLOC(CurlMulti);
