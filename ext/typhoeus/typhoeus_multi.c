@@ -179,6 +179,10 @@ static VALUE multi_perform(VALUE self) {
 
   }
 
+  rb_fd_term (&fdread);
+  rb_fd_term (&fdwrite);
+  rb_fd_term (&fdexcep);
+
   return Qnil;
 }
 
