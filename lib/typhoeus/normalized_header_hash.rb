@@ -52,7 +52,7 @@ module Typhoeus
 
   private
     def convert_key(key)
-      key.to_s.split(/_|-/).map { |segment| segment.capitalize }.join("-")
+      key.to_s.tr('_'.freeze,'-'.freeze).split('-'.freeze).map! { |segment| segment.capitalize }.join('-'.freeze)
     end
   end
 end
