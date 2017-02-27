@@ -23,14 +23,17 @@ module Typhoeus
           hash[key].each do |v|
             result[:params] << [new_key, v.to_s]
           end
-        when File, Tempfile
-          filename = File.basename(hash[key].path)
+        when File, Tempfile, ActionDispatch::Http::UploadedFile
+          puts "YAYA FILE: #{file_object.inspect}"
+          file_object = hash[key]
+          filename    = file_object.respond_to?(:original_filename) ? file_object.original_filename : File.basename(file_object.path)
+
           types = MIME::Types.type_for(filename)
           result[:files] << [
             new_key,
             filename,
             types.empty? ? 'application/octet-stream' : types[0].to_s,
-            File.expand_path(hash[key].path)
+            File.expand_path(file_object.path)
           ]
         else
           result[:params] << [new_key, hash[key].to_s]
